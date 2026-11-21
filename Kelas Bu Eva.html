@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kelas Bu Eva</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef4ff;--ink:#1d2a44;--card:#fff;--line:#c9d6f2;--btn:#3b6df0;--btnink:#fff;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#121a2c;--ink:#e8eefc;--card:#1c2740;--line:#33466e;--btn:#6b93ff;--btnink:#0c1530}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Fredoka',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px}
+h1{font-size:1.5rem;margin:4px 0 0;text-align:center}
+p.hint{margin:0;font-size:.95rem;opacity:.8;text-align:center}
+#stage{position:relative;width:100%;max-width:900px;height:min(62vh,460px);min-height:340px;border:4px solid var(--line);border-radius:14px;overflow:hidden;
+ background:linear-gradient(#f7e7c4 0 68%,#b88a5b 68%)}
+#stage::before{content:"";position:absolute;left:0;right:0;top:68%;height:6px;background:#8a6240}
+#board{position:absolute;left:50%;top:7%;transform:translateX(-50%);width:46%;height:30%;background:#24523f;border:7px solid #8a6240;border-radius:4px;color:#f4f7f2;
+ display:flex;align-items:center;justify-content:center;font-size:clamp(.9rem,2.6vw,1.6rem);text-align:center;padding:6px}
+.win{position:absolute;top:9%;width:13%;height:26%;background:#9fd4ff;border:6px solid #fff;box-shadow:inset 0 0 0 3px #7bb6e8}
+.win.a{left:5%}.win.b{right:5%}
+.char{position:absolute;bottom:9%;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:left .25s linear;transform:translateX(-50%);outline:none}
+.char svg{display:block;overflow:visible}
+.tag{background:rgba(20,24,40,.75);color:#fff;font-size:.85rem;padding:2px 10px;border-radius:6px;margin-bottom:4px;border:2px solid transparent}
+.char.sel .tag{border-color:#ffd54a;background:#2c3a66}
+.char:focus-visible .tag{border-color:#fff}
+.bubble{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:max-content;max-width:190px;background:#fff;color:#222;border:3px solid #222;border-radius:12px;
+ padding:6px 10px;font-size:.9rem;line-height:1.25;opacity:0;pointer-events:none;transition:opacity .15s;z-index:5;margin-bottom:6px}
+.bubble.on{opacity:1}
+.shadow{width:70%;height:8px;border-radius:50%;background:rgba(0,0,0,.22);margin-top:-4px}
+.arm,.legs rect{transition:transform .2s}
+.arm.l{transform-origin:23px 46px}.arm.r{transform-origin:77px 46px}
+.idle svg{animation:bob 2.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.wave .arm.r{animation:wave .5s ease-in-out infinite}
+@keyframes wave{0%,100%{transform:rotate(-150deg)}50%{transform:rotate(-115deg)}}
+.dance svg{animation:hop .5s ease-in-out infinite}
+.dance .arm.l{animation:upl .5s ease-in-out infinite}
+.dance .arm.r{animation:upr .5s ease-in-out infinite}
+@keyframes hop{50%{transform:translateY(-14px) rotate(4deg)}0%,100%{transform:rotate(-4deg)}}
+@keyframes upl{0%,100%{transform:rotate(150deg)}50%{transform:rotate(30deg)}}
+@keyframes upr{0%,100%{transform:rotate(30deg)}50%{transform:rotate(-150deg)}}
+.pt .arm.r{transform:rotate(-80deg)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+button{font:inherit;background:var(--btn);color:var(--btnink);border:0;border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:600}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+button.alt{background:var(--card);color:var(--ink);border:2px solid var(--line)}
+#quiz{width:100%;max-width:900px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px;display:none;flex-direction:column;gap:10px}
+#quiz.on{display:flex}
+#qhead{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-weight:600}
+#qtext{font-size:1.2rem;margin:0}
+#opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+#opts button.ok{background:#2e9e5b;color:#fff}
+#opts button.no{background:#d64545;color:#fff}
+#qfb{min-height:1.4em;margin:0}
+@media (max-width:600px){.char svg{zoom:.62}.bubble{max-width:140px;font-size:.8rem}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<h1>Kelas Bu Eva</h1>
+<p class="hint">Klik karakter untuk mengajaknya bicara. Panah kiri/kanan menggeser karakter terpilih.</p>
+<div id="stage" aria-label="Ruang kelas bergaya Roblox">
+  <div class="win a"></div><div class="win b"></div>
+  <div id="board">Selamat datang di kelas!</div>
+</div>
+<div class="bar">
+  <button id="bGreet">Sapa semua</button>
+  <button id="bWave" class="alt">Lambaikan tangan</button>
+  <button id="bDance" class="alt">Menari</button>
+  <button id="bLesson">Mulai pelajaran</button>
+  <button id="bL" class="alt" aria-label="Geser ke kiri">◀</button>
+  <button id="bR" class="alt" aria-label="Geser ke kanan">▶</button>
+</div>
+<div id="quiz" aria-live="polite">
+  <div id="qhead"><span id="qsub"></span><span id="qscore"></span></div>
+  <p id="qtext"></p>
+  <div id="opts"></div>
+  <p id="qfb"></p>
+  <div class="bar"><button id="qnext" class="alt">Lanjut</button><button id="qclose" class="alt">Tutup pelajaran</button></div>
+</div>
+
+<script>
+const CH = {
+  feesa:{name:'Feesa',x:14,h:150,skin:'#f3c99a',shirt:'#ff7eb6',pants:'#4a5bd6',hair:'#6b3f1d',kind:'feesa',
+    lines:['Halo, aku Feesa! Aku suka menggambar.','Bu Eva, boleh aku yang hapus papan tulis?','Caca, ayo main petak umpet nanti!','Hari ini aku bawa bekal roti cokelat.']},
+  eva:{name:'Bu Eva',x:38,h:230,skin:'#f6d3ac',shirt:'#2f6fd0',pants:'#2f3f66',hair:'#5a2a1a',kind:'eva',
+    lines:['Selamat pagi, anak-anak!','Hari ini kita belajar berhitung.','Feesa, Caca, duduk yang rapi ya.','Ibu bangga sama kalian berdua!']},
+  putra:{name:'Abang Putra',x:62,h:230,skin:'#d9a273',shirt:'#22252e',pants:'#2b4a7a',hair:'#111',kind:'putra',
+    lines:['Yo, aku Abang Putra. Santai tapi pintar!','Kimia itu seru, kayak sulap sains.','Bu Eva, aku bantu jaga kelas ya.','Semangat belajarnya, jagoan!']},
+  caca:{name:'Caca',x:86,h:150,skin:'#efc08f',shirt:'#ffd54a',pants:'#e0527a',hair:'#2a1710',kind:'caca',
+    lines:['Hai, aku Caca! Rambutku keriting lucu, kan?','Aku mau jawab pertanyaan Bu Eva!','Feesa, pinjam pensil warnamu dong.','Hihi, aku suka sekolah!']}
+};
+const SH = '#1b1b24';
+function arm(c,side){
+  const x = side==='l'?16:70;
+  return `<g class="arm ${side}"><rect x="${x}" y="44" width="14" height="30" fill="${c.shirt}"/><rect x="${x}" y="74" width="14" height="16" fill="${c.skin}"/></g>`;
+}
+function hair(c){
+  const h=c.hair;
+  if(c.kind==='putra') return {back:'',front:`<rect x="32" y="2" width="36" height="10" rx="3" fill="${h}"/><polygon points="32,4 36,-6 41,3 46,-8 51,3 56,-7 60,3 65,-5 68,5" fill="${h}"/><rect x="32" y="8" width="4" height="14" fill="${h}"/><rect x="64" y="8" width="4" height="14" fill="${h}"/>`};
+  if(c.kind==='feesa') return {
+    back:'',
+    front:`<rect x="32" y="2" width="36" height="12" rx="6" fill="${h}"/><rect x="32" y="8" width="7" height="20" fill="${h}"/><rect x="61" y="8" width="7" height="20" fill="${h}"/>
+    <polygon points="38,8 50,14 62,8 62,12 38,12" fill="${h}"/><circle cx="62" cy="5" r="5" fill="#ff4f9a"/><circle cx="72" cy="5" r="5" fill="#ff4f9a"/><circle cx="67" cy="5" r="2.5" fill="#ffd0e6"/>`};
+  if(c.kind==='caca') return {
+    back:`<circle cx="26" cy="28" r="9" fill="${h}"/><circle cx="24" cy="40" r="8" fill="${h}"/><circle cx="74" cy="28" r="9" fill="${h}"/><circle cx="76" cy="40" r="8" fill="${h}"/>`,
+    front:`<rect x="32" y="2" width="36" height="12" rx="6" fill="${h}"/><circle cx="38" cy="8" r="6" fill="${h}"/><circle cx="50" cy="6" r="6" fill="${h}"/><circle cx="62" cy="8" r="6" fill="${h}"/>
+    <circle cx="33" cy="16" r="5" fill="${h}"/><circle cx="67" cy="16" r="5" fill="${h}"/><circle cx="27" cy="22" r="3.5" fill="#ff7eb6"/><circle cx="73" cy="22" r="3.5" fill="#ff7eb6"/>`};
+  return {
+    back:`<rect x="29" y="4" width="42" height="62" rx="12" fill="${h}"/>`,
+    front:`<rect x="32" y="3" width="36" height="12" rx="6" fill="${h}"/><polygon points="34,6 66,6 66,14 44,14 34,22" fill="${h}"/><rect x="32" y="8" width="5" height="24" fill="${h}"/><rect x="63" y="8" width="5" height="24" fill="${h}"/>`};
+}
+function face(c){
+  const kid = c.kind==='feesa'||c.kind==='caca';
+  let f = `<rect x="41" y="20" width="4" height="${kid?6:5}" fill="#222"/><rect x="55" y="20" width="4" height="${kid?6:5}" fill="#222"/>`;
+  f += `<path d="M42 31 Q50 ${kid?38:36} 58 31" stroke="${c.kind==='eva'?'#c2185b':'#222'}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  if(kid) f += `<circle cx="39" cy="29" r="3" fill="#ff8aa8" opacity=".7"/><circle cx="61" cy="29" r="3" fill="#ff8aa8" opacity=".7"/>`;
+  else f += `<rect x="37" y="17" width="11" height="9" rx="2" fill="none" stroke="#333" stroke-width="1.6"/><rect x="52" y="17" width="11" height="9" rx="2" fill="none" stroke="#333" stroke-width="1.6"/><line x1="48" y1="21" x2="52" y2="21" stroke="#333" stroke-width="1.6"/>`;
+  if(c.kind==='putra') f = `<rect x="36" y="18" width="13" height="8" rx="2" fill="#111"/><rect x="51" y="18" width="13" height="8" rx="2" fill="#111"/><rect x="48" y="20" width="4" height="2" fill="#111"/><path d="M43 32 Q51 37 58 30" stroke="#222" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  return f;
+}
+function svg(c){
+  const H = hair(c), eva = c.kind==='eva', pu = c.kind==='putra';
+  return `<svg viewBox="0 0 100 150" width="${c.h*100/150}" height="${c.h}" role="img" aria-label="${c.name}">
+  ${H.back}
+  <g class="legs"><rect x="30" y="94" width="20" height="44" fill="${c.pants}"/><rect x="50" y="94" width="20" height="44" fill="${c.pants}"/>
+  <rect x="30" y="134" width="20" height="9" fill="${SH}"/><rect x="50" y="134" width="20" height="9" fill="${SH}"/></g>
+  ${eva?`<rect x="27" y="86" width="46" height="30" rx="2" fill="${c.pants}"/>`:''}
+  ${arm(c,'l')}${arm(c,'r')}
+  <rect x="30" y="44" width="40" height="50" fill="${c.shirt}"/>
+  ${pu?'<rect x="47" y="44" width="6" height="50" fill="#ff8a1f"/><rect x="30" y="44" width="40" height="6" fill="#ff8a1f"/>':''}
+  ${eva?`<polygon points="44,44 50,58 56,44" fill="#fff"/><rect x="48" y="58" width="4" height="30" fill="#1f56a8"/>`:`<rect x="30" y="88" width="40" height="6" fill="rgba(0,0,0,.15)"/>`}
+  <rect x="34" y="6" width="32" height="36" rx="6" fill="${c.skin}"/>
+  ${face(c)}${H.front}
+  </svg>`;
+}
+const stage = document.getElementById('stage'), board = document.getElementById('board');
+const EL = {}; let sel = 'eva';
+for(const [id,c] of Object.entries(CH)){
+  const d = document.createElement('div');
+  d.className='char idle'; d.tabIndex=0; d.style.left=c.x+'%'; d.setAttribute('role','button');
+  d.setAttribute('aria-label','Pilih '+c.name);
+  d.innerHTML = `<div class="bubble"></div><div class="tag">${c.name}</div>${svg(c)}<div class="shadow"></div>`;
+  d.addEventListener('click',()=>{select(id);say(id)});
+  d.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(id);say(id)}});
+  stage.appendChild(d); EL[id]=d;
+}
+function select(id){sel=id;for(const k in EL)EL[k].classList.toggle('sel',k===id)}
+const timers={};
+function say(id,text){
+  const c=CH[id], b=EL[id].querySelector('.bubble');
+  b.textContent = text || c.lines[Math.floor(Math.random()*c.lines.length)];
+  b.classList.add('on'); clearTimeout(timers[id]);
+  timers[id]=setTimeout(()=>b.classList.remove('on'),2800);
+}
+function act(cls,ms,ids){
+  (ids||Object.keys(EL)).forEach(k=>{EL[k].classList.add(cls);setTimeout(()=>EL[k].classList.remove(cls),ms)});
+}
+const wait = ms=>new Promise(r=>setTimeout(r,ms));
+let busy=false;
+async function greet(){
+  if(busy)return; busy=true;
+  act('wave',4200);
+  say('eva','Selamat pagi, anak-anak!'); await wait(1500);
+  say('feesa','Selamat pagi, Bu Eva!'); await wait(1300);
+  say('caca','Selamat pagi, Bu Eva! Hihi.'); await wait(1400);
+  say('putra','Pagi, semuanya! Semangat ya!'); await wait(1400);
+  busy=false;
+}
+const BANK={
+ mat:{n:'Matematika',who:'eva',intro:'Ayo siapkan pensil, kita berhitung!',q:[
+  ['7 × 8 = ?',['54','56','64','48'],1,'7 × 8 = 56.'],
+  ['Hasil 45 ÷ 5 adalah…',['8','9','7','10'],1,'45 ÷ 5 = 9.'],
+  ['Keliling persegi dengan sisi 6 cm?',['12 cm','24 cm','36 cm','18 cm'],1,'4 × 6 = 24 cm.'],
+  ['1/2 + 1/4 = ?',['2/6','3/4','1/6','2/4'],1,'1/2 sama dengan 2/4, jadi 2/4 + 1/4 = 3/4.']]},
+ kim:{n:'Kimia',who:'putra',intro:'Oke, masuk laboratorium. Kita main sains!',q:[
+  ['Rumus kimia air?',['CO₂','H₂O','O₂','NaCl'],1,'Air terdiri dari 2 atom H dan 1 atom O.'],
+  ['Lambang unsur oksigen?',['O','Ox','G','Au'],0,'Oksigen dilambangkan O.'],
+  ['Garam dapur punya rumus…',['KCl','HCl','NaCl','CaCO₃'],2,'Natrium klorida, NaCl.'],
+  ['pH 7 menandakan larutan yang…',['asam','basa','netral','pekat'],2,'pH 7 itu netral, seperti air murni.']]},
+ eng:{n:'Bahasa Inggris',who:'eva',intro:'Let’s learn English together!',q:[
+  ['Bahasa Inggris dari “kucing”?',['Dog','Cat','Bird','Fish'],1,'Kucing = cat.'],
+  ['She ___ a student.',['am','are','is','be'],2,'Untuk “She” dipakai “is”.'],
+  ['Lawan kata “big” adalah…',['small','tall','long','fast'],0,'Big lawannya small.'],
+  ['“Good morning” dipakai saat…',['malam','pagi','siang','sore'],1,'Good morning = selamat pagi.']]}
+};
+const $=id=>document.getElementById(id);
+let cur=null,qi=0,score=0,locked=false;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function clearPt(){for(const k in EL)EL[k].classList.remove('pt')}
+function lesson(){
+  cur=null;clearPt();$('quiz').classList.add('on');
+  $('qsub').textContent='Pilih pelajaran';$('qscore').textContent='';
+  $('qtext').textContent='Mau belajar apa hari ini?';$('qfb').textContent='';$('qnext').style.display='none';
+  board.textContent='Pilih pelajaran';say('eva','Hari ini mau belajar apa?');
+  const o=$('opts');o.innerHTML='';
+  for(const k in BANK){const b=document.createElement('button');b.textContent=BANK[k].n;b.onclick=()=>{cur=k;qi=0;score=0;say(BANK[k].who,BANK[k].intro);setTimeout(show,1300)};o.appendChild(b)}
+}
+function show(){
+  const B=BANK[cur],q=B.q[qi];locked=false;clearPt();EL[B.who].classList.add('pt');
+  $('qsub').textContent=B.n+' · soal '+(qi+1)+' dari '+B.q.length;$('qscore').textContent='Skor: '+score;
+  $('qtext').textContent=q[0];board.textContent=q[0];$('qfb').textContent='';$('qnext').style.display='none';
+  say(B.who,'Soal '+(qi+1)+': '+q[0]);
+  const o=$('opts');o.innerHTML='';
+  q[1].map((t,i)=>[t,i===q[2]]).sort(()=>Math.random()-.5).forEach(([t,ok])=>{
+    const b=document.createElement('button');b.textContent=t;b.className='alt';b.onclick=()=>answer(b,ok);o.appendChild(b)});
+}
+function answer(btn,ok){
+  if(locked)return;locked=true;
+  const B=BANK[cur],q=B.q[qi];
+  btn.className=ok?'ok':'no';
+  if(!ok)[...$('opts').children].forEach(b=>{if(b.textContent===q[1][q[2]])b.className='ok'});
+  if(ok)score++;
+  $('qscore').textContent='Skor: '+score;
+  $('qfb').textContent=(ok?'Benar! ':'Belum tepat. ')+q[3];
+  say(B.who,(ok?'Benar! ':'Hampir! ')+q[3]);
+  const kid=pick(['feesa','caca']);
+  setTimeout(()=>say(kid,ok?pick(['Yeay, benar!','Aku juga tahu!']):pick(['Yah…','Oh, begitu ya!'])),900);
+  if(ok)act('wave',1500,[kid]);
+  const last=qi===B.q.length-1;
+  $('qnext').textContent=last?'Lihat hasil':'Soal berikutnya';$('qnext').style.display='';
+}
+function finish(){
+  const B=BANK[cur],n=B.q.length;clearPt();
+  $('qsub').textContent=B.n+' · selesai';$('qscore').textContent='Skor: '+score+'/'+n;
+  const msg=score===n?'Sempurna! Kalian hebat!':score>=n/2?'Bagus! Terus belajar ya.':'Tidak apa-apa, kita ulangi pelan-pelan.';
+  $('qtext').textContent=msg;$('qfb').textContent='';$('qnext').style.display='none';board.textContent='Skor '+score+' dari '+n;
+  say(B.who,msg);if(score>=n/2)act('dance',3000);
+  const o=$('opts');o.innerHTML='';
+  const a=document.createElement('button');a.textContent='Ulangi pelajaran';a.onclick=()=>{qi=0;score=0;show()};
+  const b=document.createElement('button');b.className='alt';b.textContent='Pelajaran lain';b.onclick=lesson;
+  o.append(a,b);
+}
+$('qnext').onclick=()=>{qi++;qi<BANK[cur].q.length?show():finish()};
+$('qclose').onclick=()=>{$('quiz').classList.remove('on');clearPt();board.textContent='Selamat datang di kelas!';say('eva','Sampai jumpa di pelajaran berikutnya!')};
+function move(dx){
+  const c=CH[sel]; c.x=Math.max(8,Math.min(92,c.x+dx)); EL[sel].style.left=c.x+'%';
+}
+document.getElementById('bGreet').onclick=greet;
+document.getElementById('bWave').onclick=()=>act('wave',3000);
+document.getElementById('bDance').onclick=()=>{act('dance',4000);Object.keys(EL).forEach(k=>say(k,['Yeay!','Ayo menari!','La la la~'][Math.floor(Math.random()*3)]))};
+document.getElementById('bLesson').onclick=lesson;
+document.getElementById('bL').onclick=()=>move(-6);
+document.getElementById('bR').onclick=()=>move(6);
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft'){e.preventDefault();move(-4)} else if(e.key==='ArrowRight'){e.preventDefault();move(4)}
+});
+select('eva'); setTimeout(greet,600);
+</script>
+</body>
+</html>
